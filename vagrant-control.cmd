@@ -1,32 +1,31 @@
+REM Set echo off to less verbose output
 @ECHO off
-rem Enable extensions and delayexpansion to use array
-rem such as id!count! = [id1, id2, id3, ...]
-rem
-rem Set echo off to less verbose output
-rem
-rem If OR example
-rem 	IF <condition> 			SET flag=1
-rem		If <other_condition>	SET flag=1
-rem		IF %flag% == 1 (command)
-rem
-rem FOR /F to loop through <command>
-rem 	skip=0 to set number of lines to skip
-rem		USEBACKQ to set type of quota, this help to valid quote in `command`
-rem 	tokens=* tokens=1,4,5 tokens=1-4 to determine which elements will be capture
-rem			default is 1: only fetch first element
-rem			elements is seperate by [space] by default, to modify use {delim}
-rem			To get elements, use sequent Latin letter
-rem				example: tokens=1,4,5 %%g => %%g mean first token, %%h mean second, %%i mean third one
-rem
-rem	FOR /L to normal loop through number of times
-rem		FOR /L %%i IN (start, step, end)
-rem
-rem	SET /P variable=<message> to show <message> and wait for user input, input will be store in variable
-rem SET /A Arithmetic expression (add, subtract, ...)
 
+REM Enable extensions and delayexpansion to use array
+REM such as id!count! = [id1, id2, id3, ...]
 SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
-rem SET firstTime=0
+REM Commands instruction
+REM If OR example
+REM 	IF <condition> 			SET flag=1
+REM		If <other_condition>	SET flag=1
+REM		IF %flag% == 1 (command)
+REM
+REM FOR /F to loop through <command>
+REM 	skip=0 to set number of lines to skip
+REM		USEBACKQ to set type of quota, this help to valid quote in `command`
+REM 	tokens=* tokens=1,4,5 tokens=1-4 to determine which elements will be capture
+REM			default is 1: only fetch first element
+REM			elements are seperate by [space] by default, to modify use {delim}
+REM			To capture tokens, use sequent Latin letter
+REM				example: tokens=1,4,5 %%g ===> %%g mean first token, %%h mean second, %%i mean third one,...
+REM
+REM	FOR /L to normal loop through number of times
+REM		FOR /L %%i IN (start, step, end)
+REM
+REM	SET /P variable=<message> to show <message> and wait for user input, input will be store in variable
+REM SET /A Arithmetic expression (add, subtract, ...)
+
 SET machineId=0
 SET commandId=0
 
@@ -41,7 +40,7 @@ SET commandId=0
 	  	SET status!count!=%%h
   		SET location!count!=%%i
 	)
-	rem Should never go here
+	REM Should never go here
 	GOTO :MainMenu
 
 :MainMenu
@@ -73,7 +72,6 @@ SET commandId=0
 	)
 
 :ShutdownAll
-	rem SET /a firstTime=0
 	FOR /L %%i IN (1,1,%count%) DO (
 		vagrant halt !id%%i!
 	)
@@ -96,7 +94,6 @@ SET commandId=0
 	EXIT
 
 :ChoiceMachine
-	rem SET /a firstTime=0
 	SET /P choice="Machine: "
 	if "!id%choice%!"=="" (
 		goto :ChoiceMachine
