@@ -22,23 +22,19 @@ rem	FOR /L to normal loop through number of times
 rem		FOR /L %%i IN (start, step, end)
 rem
 rem	SET /P variable=<message> to show <message> and wait for user input, input will be store in variable
+rem SET /A Arithmetic expression (add, subtract, ...)
 
 SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
-SET count=0
-SET firstTime=0
+rem SET firstTime=0
 SET machineId=0
 SET commandId=0
 
 :ReadData
-	SET /a count=0
+	SET count=0
 	FOR /F "skip=2 USEBACKQ tokens=1,4,5" %%g IN (`vagrant global-status`) DO (
-		IF "%%g"=="The" (
-			IF %firstTime% EQU 0 (
-				GOTO :DisplayInfo
-			) ELSE (
-				GOTO :DisplayInfo2
-			)
+		if "%%g"=="The" (
+			goto :MainMenu
 		)
 		SET /a count=!count!+1
 	  	SET id!count!=%%g
@@ -46,88 +42,38 @@ SET commandId=0
   		SET location!count!=%%i
 	)
 	rem Should never go here
-	GOTO :DisplayInfo
+	GOTO :MainMenu
 
-:DisplayInfo
+:MainMenu
 	ECHO.
 	ECHO There are %count% machines
 	FOR /L %%i IN (1,1,%count%) DO (
 		ECHO %%i. !id%%i! !status%%i! !location%%i!
 	)
 	ECHO.
-	GOTO :ChoiceCommand
+	echo 1. Choice Machine
+	ECHO 2. Halt all
+	ECHO 3. Halt all and shutdown
+	ECHO 4. Terminate
+	GOTO :FirstChoice
 
-:DisplayInfo2
-	ECHO.
-	ECHO Choose machine to process
-	FOR /L %%i IN (1,1,%count%) DO (
-		ECHO %%i. !id%%i! !status%%i! !location%%i!
+:FirstChoice
+	set /P choice="Command: "
+	if %choice% equ 1 (
+		echo.
+		goto :ChoiceMachine
+	) else if %choice% equ 2 (
+		goto :ShutdownAll
+	) else if %choice% equ 3 (
+		goto :ShutdownComputer
+	) else if %choice% equ 4 (
+		goto :End
+	) else (
+		goto :FirstChoice
 	)
-	ECHO.
-	GOTO :ChoiceMachine
-
-:ChoiceCommand
-	SET /a firstTime=1
-	ECHO 1. Start a machine
-	ECHO 2. SSH a machine
-	ECHO 3. Halt a machine
-	ECHO 4. Halt all
-	ECHO 5. Halt all and shutdown
-	ECHO 6. Terminal
-
-	SET /P choice="Your choice: "
-
-	IF %choice% EQU 1 (
-		SET /a commandId=1
-		GOTO :ReadData
-	) ELSE IF %choice% EQU 2 (
-		SET /a commandId=2
-		GOTO :ReadData
-	) ELSE IF %choice% EQU 3 (
-		SET /a commandId=3
-		GOTO :ReadData
-	) ELSE IF %choice% EQU 4 (
-		GOTO :ShutdownAll
-	) ELSE IF %choice% EQU 5 (
-		GOTO :ShutdownComputer
-	) ELSE IF %choice% EQU 6 (
-		GOTO :End
-	) ELSE (
-		GOTO :ChoiceCommand
-	)
-
-:ChoiceMachine
-	SET /a firstTime=0
-	SET /P choice="Machine: "	
-	SET /a machineId=%choice%
-	IF %commandId% EQU 1 (
-		GOTO :StartMachine
-	) ELSE IF %commandId% EQU 2 (
-		GOTO :SshMachine
-	) ELSE IF %commandId% EQU 3 (
-		GOTO :HaltMachine
-	) ELSE (
-		rem should never go here
-		GOTO :End
-	)
-
-:StartMachine
-	SET command=vagrant up !id%machineId%!
-	%command%
-	GOTO :ReadData
-
-:SshMachine
-	SET command=vagrant ssh !id%machineId%!
-	%command%
-	GOTO :ReadData
-
-:HaltMachine
-	SET command=vagrant halt !id%machineId%!
-	%command%
-	GOTO :ReadData
 
 :ShutdownAll
-	SET /a firstTime=0
+	rem SET /a firstTime=0
 	FOR /L %%i IN (1,1,%count%) DO (
 		vagrant halt !id%%i!
 	)
@@ -148,5 +94,50 @@ SET commandId=0
 	ENDLOCAL
 	PAUSE
 	EXIT
+
+:ChoiceMachine
+	rem SET /a firstTime=0
+	SET /P choice="Machine: "
+	if "!id%choice%!"=="" (
+		goto :ChoiceMachine
+	) else (
+		SET machineId=%choice%
+		echo.
+		echo Machine !id%choice%! !status%choice%! !location%choice%!
+		ECHO 1. Start machine
+		ECHO 2. SSH machine
+		ECHO 3. Halt machine
+		echo 0. Back
+		goto :ChoiceCommand
+	)
+
+:ChoiceCommand
+	SET /P choice="Your choice: "
+	IF %choice% EQU 1 (
+		GOTO :StartMachine
+	) ELSE IF %choice% EQU 2 (
+		GOTO :SshMachine
+	) ELSE IF %choice% EQU 3 (
+		GOTO :HaltMachine
+	) ELSE IF %choice% EQU 0 (
+		GOTO :MainMenu
+	) ELSE (
+		GOTO :ChoiceCommand
+	)
+
+:StartMachine
+	SET command=vagrant up !id%machineId%!
+	%command%
+	GOTO :ReadData
+
+:SshMachine
+	SET command=vagrant ssh !id%machineId%!
+	%command%
+	GOTO :ReadData
+
+:HaltMachine
+	SET command=vagrant halt !id%machineId%!
+	%command%
+	GOTO :ReadData
 
 PAUSE
