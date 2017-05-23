@@ -1,5 +1,5 @@
-REM Set echo off to less verbose output
 @ECHO off
+REM Set echo off to less verbose output
 
 REM Enable extensions and delayexpansion to use array
 REM such as id!count! = [id1, id2, id3, ...]
@@ -25,6 +25,20 @@ REM		FOR /L %%i IN (start, step, end)
 REM
 REM	SET /P variable=<message> to show <message> and wait for user input, input will be store in variable
 REM SET /A Arithmetic expression (add, subtract, ...)
+REM 
+REM CHOICE  /T 	time in second
+REM			/C  possible key user can press. Default is YN: [y] key and [n] key
+REM			/N 	Not display posible key to user (in case has many keys, message become verbose )
+REM			/CS Make choice key case sensitive
+REM			/D 	Default key if user not choose after time out
+REM			/m 	"Describe message"
+REM		Key order after /C is important for detect errorlevel after command.
+REM			Eg. /C ynabpm mean user can press [y],[n],[a],[b],[p],[m]
+REM				errorlevel: [y] = 1, [n] = 2, [a] = 3, ...
+REM				Catch errorlevel: IF errorlevel 5 doSomething
+REM								  IF errorlevel 4 doOtherThing
+REM			Higher errorlevel should be caught earlier,
+REM				because 'errorlevel x' will return TRUE for any errorlevel y >= x
 
 SET machineId=0
 SET commandId=0
@@ -32,8 +46,8 @@ SET commandId=0
 :ReadData
 	SET count=0
 	FOR /F "skip=2 USEBACKQ tokens=1,4,5" %%g IN (`vagrant global-status`) DO (
-		if "%%g"=="The" (
-			goto :MainMenu
+		IF "%%g"=="The" (
+			GOTO :MainMenu
 		)
 		SET /a count=!count!+1
 	  	SET id!count!=%%g
@@ -50,25 +64,25 @@ SET commandId=0
 		ECHO %%i. !id%%i! !status%%i! !location%%i!
 	)
 	ECHO.
-	echo 1. Choice Machine
+	ECHO 1. Choice Machine
 	ECHO 2. Halt all
 	ECHO 3. Halt all and shutdown
 	ECHO 4. Terminate
 	GOTO :FirstChoice
 
 :FirstChoice
-	set /P choice="Command: "
-	if %choice% equ 1 (
-		echo.
-		goto :ChoiceMachine
-	) else if %choice% equ 2 (
-		goto :ShutdownAll
-	) else if %choice% equ 3 (
-		goto :ShutdownComputer
-	) else if %choice% equ 4 (
-		goto :End
-	) else (
-		goto :FirstChoice
+	SET /P choice="Command: "
+	IF %choice% EQU 1 (
+		ECHO.
+		GOTO :ChoiceMachine
+	) ELSE IF %choice% EQU 2 (
+		GOTO :ShutdownAll
+	) ELSE IF %choice% EQU 3 (
+		GOTO :ShutdownComputer
+	) ELSE IF %choice% EQU 4 (
+		GOTO :End
+	) ELSE (
+		GOTO :FirstChoice
 	)
 
 :ShutdownAll
@@ -84,9 +98,15 @@ SET commandId=0
 
 	ECHO.
 	ECHO DANGER, PREPARE TO SHUTDOWN
-	TIMEOUT /T 10
-	SHUTDOWN.EXE -s -t 20
-	exit
+	CHOICE /T 10 /C 1234567890qwertyuiopasdfghjklzxcvbnm /N /D 1 /m "Press any key except [1] to cancel: "
+	IF errorlevel 2 (
+		ECHO Shutdown canceled.
+		GOTO :ReadData
+	)
+	IF errorlevel 1 (
+		SHUTDOWN.EXE -s -t 20
+		EXIT
+	)
 
 :End
 	ENDLOCAL
@@ -95,17 +115,17 @@ SET commandId=0
 
 :ChoiceMachine
 	SET /P choice="Machine: "
-	if "!id%choice%!"=="" (
-		goto :ChoiceMachine
-	) else (
+	IF "!id%choice%!"=="" (
+		GOTO :ChoiceMachine
+	) ELSE (
 		SET machineId=%choice%
-		echo.
-		echo Machine !id%choice%! !status%choice%! !location%choice%!
+		ECHO.
+		ECHO Machine !id%choice%! !status%choice%! !location%choice%!
 		ECHO 1. Start machine
 		ECHO 2. SSH machine
 		ECHO 3. Halt machine
-		echo 0. Back
-		goto :ChoiceCommand
+		ECHO 0. Back
+		GOTO :ChoiceCommand
 	)
 
 :ChoiceCommand
