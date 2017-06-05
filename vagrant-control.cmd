@@ -39,6 +39,14 @@ REM				Catch errorlevel: IF errorlevel 5 doSomething
 REM								  IF errorlevel 4 doOtherThing
 REM			Higher errorlevel should be caught earlier,
 REM				because 'errorlevel x' will return TRUE for any errorlevel y >= x
+REM
+REM	Function can created similar label, enclose by SETLOCAL and ENDLOCAL for local variable if need
+REM 	EXIT /b to exit function and return to where it's called
+REM 	CALL :function [parameters]
+REM			inside function, get parameters by %1, %2, %3, ...
+
+SET STATE_RUNNING="running"
+SET STATE_OFF="poweroff"
 
 SET machineId=0
 SET commandId=0
@@ -54,7 +62,6 @@ SET commandId=0
 	  	SET status!count!=%%h
   		SET location!count!=%%i
 	)
-	REM Should never go here
 	GOTO :MainMenu
 
 :MainMenu
@@ -143,18 +150,55 @@ SET commandId=0
 	)
 
 :StartMachine
-	SET command=vagrant up !id%machineId%!
-	%command%
-	GOTO :ReadData
-
-:SshMachine
-	SET command=vagrant ssh !id%machineId%!
-	%command%
+	CALL :StartCommand !id%machineId%!
 	GOTO :ReadData
 
 :HaltMachine
-	SET command=vagrant halt !id%machineId%!
-	%command%
+	CALL :HaltCommand !id%machineId%!
 	GOTO :ReadData
+
+:SshMachine
+	CALL :GetMachineState !id%machineId%!
+	IF "%machineState%" EQU %STATE_RUNNING% (
+		CALL :SshCommand !id%machineId%!
+	) ELSE IF "%machineState%" EQU %STATE_OFF% (
+		ECHO Try to start machine before ssh
+		CALL :StartCommand !id%machineId%!
+		CALL :SshCommand !id%machineId%!
+	) ELSE (
+		ECHO Machine state is not valid: %machineState%
+	)
+	GOTO :ReadData
+
+:GetMachineState
+	SETLOCAL
+	FOR /F "USEBACKQ skip=1 tokens=2" %%g IN (`vagrant status %1`) DO (
+		SET _state=%%g
+		GOTO :breakLoop
+	)
+	:breakLoop
+	ENDLOCAL & SET machineState=%_state%
+	EXIT /b
+
+:StartCommand
+	SETLOCAL
+	SET _command=vagrant up %1
+	%_command%
+	ENDLOCAL
+	EXIT /b
+
+:SshCommand
+	SETLOCAL
+	SET _command=vagrant ssh %1
+	%_command%
+	ENDLOCAL
+	EXIT /b
+
+:HaltCommand
+	SETLOCAL
+	SET _command=vagrant halt %1
+	%_command%
+	ENDLOCAL
+	EXIT /b
 
 PAUSE
