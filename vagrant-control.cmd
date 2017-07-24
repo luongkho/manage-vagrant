@@ -72,9 +72,10 @@ SET commandId=0
 	)
 	ECHO.
 	ECHO 1. Choice Machine
-	ECHO 2. Halt all
-	ECHO 3. Halt all and shutdown
-	ECHO 4. Terminate
+	ECHO 2. Refresh
+	ECHO 3. Halt all
+	ECHO 4. Halt all and shutdown
+	ECHO 5. Terminate
 	GOTO :FirstChoice
 
 :FirstChoice
@@ -83,14 +84,22 @@ SET commandId=0
 		ECHO.
 		GOTO :ChoiceMachine
 	) ELSE IF %choice% EQU 2 (
-		GOTO :ShutdownAll
+		GOTO :RefreshAll
 	) ELSE IF %choice% EQU 3 (
-		GOTO :ShutdownComputer
+		GOTO :ShutdownAll
 	) ELSE IF %choice% EQU 4 (
+		GOTO :ShutdownComputer
+	) ELSE IF %choice% EQU 5 (
 		GOTO :End
 	) ELSE (
 		GOTO :FirstChoice
 	)
+
+:RefreshAll
+	FOR /L %%i IN (1,1,%count%) DO (
+		vagrant status !id%%i!
+	)
+	GOTO :ReadData
 
 :ShutdownAll
 	FOR /L %%i IN (1,1,%count%) DO (
@@ -129,8 +138,9 @@ SET commandId=0
 		ECHO.
 		ECHO Machine !id%choice%! !status%choice%! !location%choice%!
 		ECHO 1. Start machine
-		ECHO 2. SSH machine
-		ECHO 3. Halt machine
+		ECHO 2. Refresh
+		ECHO 3. SSH machine
+		ECHO 4. Halt machine
 		ECHO 0. Back
 		GOTO :ChoiceCommand
 	)
@@ -140,14 +150,20 @@ SET commandId=0
 	IF %choice% EQU 1 (
 		GOTO :StartMachine
 	) ELSE IF %choice% EQU 2 (
-		GOTO :SshMachine
+		GOTO :RefreshMachine
 	) ELSE IF %choice% EQU 3 (
+		GOTO :SshMachine
+	) ELSE IF %choice% EQU 4 (
 		GOTO :HaltMachine
 	) ELSE IF %choice% EQU 0 (
 		GOTO :MainMenu
 	) ELSE (
 		GOTO :ChoiceCommand
 	)
+
+:RefreshMachine
+	CALL :RefreshCommand !id%machineId%!
+	GOTO :ReadData
 
 :StartMachine
 	CALL :StartCommand !id%machineId%!
@@ -178,6 +194,13 @@ SET commandId=0
 	)
 	:breakLoop
 	ENDLOCAL & SET machineState=%_state%
+	EXIT /b
+
+:RefreshCommand
+	SETLOCAL
+	SET _command=vagrant status %1
+	%_command%
+	ENDLOCAL
 	EXIT /b
 
 :StartCommand
