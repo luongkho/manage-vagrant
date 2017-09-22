@@ -138,9 +138,10 @@ SET commandId=0
 		ECHO.
 		ECHO Machine !id%choice%! !status%choice%! !location%choice%!
 		ECHO 1. Start machine
-		ECHO 2. Refresh
-		ECHO 3. SSH machine
-		ECHO 4. Halt machine
+		ECHO 2. SSH machine
+		ECHO 3. Restart machine
+		ECHO 4. Refresh
+		ECHO 5. Halt machine
 		ECHO 0. Back
 		GOTO :ChoiceCommand
 	)
@@ -150,10 +151,12 @@ SET commandId=0
 	IF %choice% EQU 1 (
 		GOTO :StartMachine
 	) ELSE IF %choice% EQU 2 (
-		GOTO :RefreshMachine
-	) ELSE IF %choice% EQU 3 (
 		GOTO :SshMachine
+	) ELSE IF %choice% EQU 3 (
+		GOTO :RestartMachine
 	) ELSE IF %choice% EQU 4 (
+		GOTO ::RefreshMachine
+	) ELSE IF %choice% EQU 5 (
 		GOTO :HaltMachine
 	) ELSE IF %choice% EQU 0 (
 		GOTO :MainMenu
@@ -184,6 +187,11 @@ SET commandId=0
 	) ELSE (
 		ECHO Machine state is not valid: %machineState%
 	)
+	GOTO :ReadData
+	
+:RestartMachine
+	CALL :HaltCommand !id%machineId%!
+	CALL :StartCommand !id%machineId%!
 	GOTO :ReadData
 
 :GetMachineState
