@@ -155,7 +155,7 @@ SET commandId=0
 	) ELSE IF %choice% EQU 3 (
 		GOTO :RestartMachine
 	) ELSE IF %choice% EQU 4 (
-		GOTO ::RefreshMachine
+		GOTO :RefreshMachine
 	) ELSE IF %choice% EQU 5 (
 		GOTO :HaltMachine
 	) ELSE IF %choice% EQU 0 (
