@@ -49,9 +49,12 @@ SET STATE_RUNNING="running"
 SET STATE_OFF="poweroff"
 
 SET machineId=0
-SET commandId=0
+SET isProvision=0
 
 :ReadData
+	REM Reset global variable
+	SET isProvision=0
+	
 	SET count=0
 	FOR /F "skip=2 USEBACKQ tokens=1,4,5" %%g IN (`vagrant global-status`) DO (
 		IF "%%g"=="The" (
@@ -149,10 +152,12 @@ SET commandId=0
 :ChoiceCommand
 	SET /P choice="Your choice: "
 	IF %choice% EQU 1 (
+		CALL :Provision
 		GOTO :StartMachine
 	) ELSE IF %choice% EQU 2 (
 		GOTO :SshMachine
 	) ELSE IF %choice% EQU 3 (
+		CALL :Provision
 		GOTO :RestartMachine
 	) ELSE IF %choice% EQU 4 (
 		GOTO :RefreshMachine
@@ -162,6 +167,21 @@ SET commandId=0
 		GOTO :MainMenu
 	) ELSE (
 		GOTO :ChoiceCommand
+	)
+	
+:Provision
+	ECHO.
+	ECHO 1. Normal boot
+	ECHO 2. Provision
+	SET /P provision="Your choice: "
+	IF %provision% EQU 1 (
+		SET isProvision=0
+		EXIT /b
+	) ELSE IF %provision% EQU 2 (
+		SET isProvision=1
+		EXIT /b
+	) ELSE (
+		GOTO :Provision
 	)
 
 :RefreshMachine
@@ -190,8 +210,7 @@ SET commandId=0
 	GOTO :ReadData
 	
 :RestartMachine
-	CALL :HaltCommand !id%machineId%!
-	CALL :StartCommand !id%machineId%!
+	CALL :ReloadCommand !id%machineId%!
 	GOTO :ReadData
 
 :GetMachineState
@@ -213,7 +232,24 @@ SET commandId=0
 
 :StartCommand
 	SETLOCAL
-	SET _command=vagrant up %1
+	IF %isProvision% EQU 1 (
+		SET _command=vagrant up %1 --provision
+	) ELSE (
+		SET _command=vagrant up %1
+	)
+	ECHO %_command%		# Testing
+	%_command%
+	ENDLOCAL
+	EXIT /b
+
+:ReloadCommand
+	SETLOCAL
+	IF %isProvision% EQU 1 (
+		SET _command=vagrant reload %1 --provision
+	) ELSE (
+		SET _command=vagrant reload %1
+	)
+	ECHO %_command%		# Testing
 	%_command%
 	ENDLOCAL
 	EXIT /b
