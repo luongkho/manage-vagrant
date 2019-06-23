@@ -237,7 +237,7 @@ SET isProvision=0
 	) ELSE (
 		SET _command=vagrant up %1
 	)
-	ECHO %_command%		# Testing
+	ECHO %_command%
 	%_command%
 	ENDLOCAL
 	EXIT /b
@@ -249,7 +249,7 @@ SET isProvision=0
 	) ELSE (
 		SET _command=vagrant reload %1
 	)
-	ECHO %_command%		# Testing
+	ECHO %_command%
 	%_command%
 	ENDLOCAL
 	EXIT /b
