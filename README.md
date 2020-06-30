@@ -1,7 +1,12 @@
 # Vagrant Management
 This batch file is use in Windows, where installed many vagrant box instances.
 
-Easy to view all machine status, give simple command (start, ssh, suspend, restart)
+## Benefit
+Run vagrant command from anywhere, not restrict to stand under a vagrant box.  
+Manage all boxes in a single console.  
+Support simple vagrant and windows commands (start, ssh, suspend, reload, suspend all, turn of after suspend all).  
+
+![Features](https://i.imgur.com/532Dbcu.png)
  
  ## Usage
  Just run it from anywhere in your computer.
