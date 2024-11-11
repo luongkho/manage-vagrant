@@ -16,7 +16,10 @@ read_data() {
         count=$((count + 1))
         eval "id$count=$(echo $line | awk '{print $1}')"
         eval "status$count=$(echo $line | awk '{print $4}')"
-        eval "location$count=$(echo $line | awk '{print $5}')"
+#        eval "location$count=$(echo $line | awk '{$1=$2=$3=$4=""; print $0}')"
+#        location="$("$line" | awk '{$1=$2=$3=$4=""; print $0}')"
+        eval "location$count=$(echo "$line" | awk '{print $NF}')"
+#        eval "location$count=${location}"
     done < <(vagrant global-status | tail -n +3)
     main_menu
 }
@@ -83,11 +86,10 @@ end() {
 
 choice_machine() {
     read -p "Machine: " choice
-    eval id=\${id$choice}
-    if [[ -z $id ]]; then
+    eval machineId=\${id$choice}
+    if [[ -z $machineId ]]; then
         choice_machine
     else
-        machineId=$choice
         echo
         eval echo "Machine \${id$choice} \${status$choice} \${location$choice}"
         echo "1. Start machine"
@@ -126,28 +128,28 @@ provision() {
 }
 
 refresh_machine() {
-    refresh_command "$id"
+    refresh_command $machineId
     read_data
 }
 
 start_machine() {
-    start_command "$id"
+    start_command $machineId
     read_data
 }
 
 halt_machine() {
-    halt_command "${id}"
+    halt_command $machineId
     read_data
 }
 
 ssh_machine() {
-    get_machine_state ${id}
+    get_machine_state $machineId
     if [[ $machineState == $STATE_RUNNING ]]; then
-        ssh_command ${id}
+        ssh_command $machineId
     elif [[ $machineState == $STATE_OFF ]]; then
         echo "Try to start machine before ssh"
-        start_command ${id}
-        ssh_command ${id}
+        start_command $machineId
+        ssh_command $machineId
     else
         echo "Machine state is not valid: $machineState"
     fi
@@ -155,7 +157,7 @@ ssh_machine() {
 }
 
 restart_machine() {
-    reload_command ${id}
+    reload_command $machineId
     read_data
 }
 
