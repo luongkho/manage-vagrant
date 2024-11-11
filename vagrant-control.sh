@@ -10,7 +10,7 @@ read_data() {
     isProvision=0
     count=0
     while IFS= read -r line; do
-        if [[ "$line" != *[![:space:]]* || $line == The* ]]; then
+        if [[ "$line" != *[![:space:]]* ]]; then
             break
         fi
         count=$((count + 1))
@@ -162,7 +162,12 @@ restart_machine() {
 }
 
 get_machine_state() {
-    machineState=$(vagrant status $1 | awk 'NR==2 {print $2}')
+    while IFS= read -r line; do
+        if [[ "$line" != *[![:space:]]* ]]; then
+            break
+        fi
+        machineState=$(echo "$line" | awk '{print $2}')
+    done < <(vagrant status "$1" | tail -n +3)
 }
 
 refresh_command() {
